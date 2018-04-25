@@ -139,26 +139,41 @@ const std::string Bitboards::pretty(Bitboard b) {
 /// Bitboards::init() initializes various bitboard tables. It is called at
 /// startup and relies on global objects to be already zero-initialized.
 
-void Bitboards::init() {
-
+void init_popcnt()
+{
   for (unsigned i = 0; i < (1 << 16); ++i)
       PopCnt16[i] = (uint8_t) popcount16(i);
+}
 
+void init_squarebb()
+{
   for (Square s = SQ_A1; s <= SQ_H8; ++s)
   {
       SquareBB[s] = 1ULL << s;
       BSFTable[bsf_index(SquareBB[s])] = s;
   }
+}
 
+void init_msbtable()
+{
   for (Bitboard b = 2; b < 256; ++b)
       MSBTable[b] = MSBTable[b - 1] + !more_than_one(b);
+}
 
+void init_filebb()
+{
   for (File f = FILE_A; f <= FILE_H; ++f)
       FileBB[f] = f > FILE_A ? FileBB[f - 1] << 1 : FileABB;
+}
 
+void init_rankbb()
+{
   for (Rank r = RANK_1; r <= RANK_8; ++r)
       RankBB[r] = r > RANK_1 ? RankBB[r - 1] << 8 : Rank1BB;
+}
 
+void init_p2()
+{
   for (File f = FILE_A; f <= FILE_H; ++f)
       AdjacentFilesBB[f] = (f > FILE_A ? FileBB[f - 1] : 0) | (f < FILE_H ? FileBB[f + 1] : 0);
 
@@ -172,7 +187,10 @@ void Bitboards::init() {
           PawnAttackSpan[c][s] = ForwardRanksBB[c][rank_of(s)] & AdjacentFilesBB[file_of(s)];
           PassedPawnMask[c][s] = ForwardFileBB [c][s] | PawnAttackSpan[c][s];
       }
+}
 
+void init_p3()
+{
   for (Square s1 = SQ_A1; s1 <= SQ_H8; ++s1)
       for (Square s2 = SQ_A1; s2 <= SQ_H8; ++s2)
           if (s1 != s2)
@@ -198,7 +216,10 @@ void Bitboards::init() {
                           PseudoAttacks[pt][s] |= to;
                   }
               }
+}
 
+void init_p4()
+{
   Direction RookDirections[] = { NORTH,  EAST,  SOUTH,  WEST };
   Direction BishopDirections[] = { NORTH_EAST, SOUTH_EAST, SOUTH_WEST, NORTH_WEST };
 
@@ -220,6 +241,25 @@ void Bitboards::init() {
               BetweenBB[s1][s2] = attacks_bb(pt, s1, SquareBB[s2]) & attacks_bb(pt, s2, SquareBB[s1]);
           }
   }
+}
+
+void Bitboards::init() {
+
+  init_popcnt();
+
+  init_squarebb();
+
+  init_msbtable();
+
+  init_filebb();
+
+  init_rankbb();
+
+  init_p2();
+
+  init_p3();
+
+  init_p4();
 }
 
 
