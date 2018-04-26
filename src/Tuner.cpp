@@ -50,6 +50,13 @@ constexpr auto MAX_ERROR = 1e-4f;
 
 using namespace Utils;
 
+typedef struct
+{
+  
+  
+} 
+
+
 static void sgemmBatched_ref(const std::vector<float>& a,
                              const std::vector<float>& b,
                              std::vector<float>& c,

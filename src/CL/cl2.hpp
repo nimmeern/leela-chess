@@ -4162,7 +4162,7 @@ public:
  * 
  *  \see Memory
  */
-class Image : public Memory
+ : public Memory
 {
 protected:
     //! \brief Default constructor - initializes to NULL.
@@ -4519,6 +4519,32 @@ public:
  * 
  *  \see Memory
  */
+ 
+class ImageType
+{
+  public:
+    enum enum_image_constr {
+      IC_variant1,
+      IC_variant2
+    }  
+  
+    Context &context;
+    cl_mem_flags flags;
+    ImageFormat format;
+    size_type width;
+    size_type height;
+    size_type row_pitch;
+    void* host_ptr;
+    cl_int* err;
+    Buffer &sourceBuffer;
+    cl_channel_order order;
+    Image &sourceImage;
+    IMAGE_VAR variant;
+    
+    ImageType() : width(0), height(0), row_pitch(0) {}
+    
+} 
+ 
 class Image2D : public Image
 {
 public:
@@ -4526,15 +4552,7 @@ public:
      *
      *  Wraps clCreateImage().
      */
-    Image2D(
-        const Context& context,
-        cl_mem_flags flags,
-        ImageFormat format,
-        size_type width,
-        size_type height,
-        size_type row_pitch = 0,
-        void* host_ptr = NULL,
-        cl_int* err = NULL)
+    Image2D(ImageType imgTyp)
     {
         cl_int error;
         bool useCreateImage;
@@ -4597,41 +4615,7 @@ public:
     *
     *  Wraps clCreateImage().
     */
-    Image2D(
-        const Context& context,
-        ImageFormat format,
-        const Buffer &sourceBuffer,
-        size_type width,
-        size_type height,
-        size_type row_pitch = 0,
-        cl_int* err = nullptr)
-    {
-        cl_int error;
-
-        cl_image_desc desc =
-        {
-            CL_MEM_OBJECT_IMAGE2D,
-            width,
-            height,
-            0, 0, // depth, array size (unused)
-            row_pitch,
-            0, 0, 0,
-            // Use buffer as input to image
-            sourceBuffer()
-        };
-        object_ = ::clCreateImage(
-            context(),
-            0, // flags inherited from buffer
-            &format,
-            &desc,
-            nullptr,
-            &error);
-
-        detail::errHandler(error, __CREATE_IMAGE_ERR);
-        if (err != nullptr) {
-            *err = error;
-        }
-    }
+    
 #endif //#if CL_HPP_TARGET_OPENCL_VERSION >= 200 || defined(CL_HPP_USE_CL_IMAGE2D_FROM_BUFFER_KHR)
 
 #if CL_HPP_TARGET_OPENCL_VERSION >= 200
@@ -4647,57 +4631,7 @@ public:
     *
     * Wraps clCreateImage().
     */
-    Image2D(
-        const Context& context,
-        cl_channel_order order,
-        const Image &sourceImage,
-        cl_int* err = nullptr)
-    {
-        cl_int error;
-
-        // Descriptor fields have to match source image
-        size_type sourceWidth = 
-            sourceImage.getImageInfo<CL_IMAGE_WIDTH>();
-        size_type sourceHeight = 
-            sourceImage.getImageInfo<CL_IMAGE_HEIGHT>();
-        size_type sourceRowPitch =
-            sourceImage.getImageInfo<CL_IMAGE_ROW_PITCH>();
-        cl_uint sourceNumMIPLevels =
-            sourceImage.getImageInfo<CL_IMAGE_NUM_MIP_LEVELS>();
-        cl_uint sourceNumSamples =
-            sourceImage.getImageInfo<CL_IMAGE_NUM_SAMPLES>();
-        cl_image_format sourceFormat =
-            sourceImage.getImageInfo<CL_IMAGE_FORMAT>();
-
-        // Update only the channel order. 
-        // Channel format inherited from source.
-        sourceFormat.image_channel_order = order;
-        cl_image_desc desc =
-        {
-            CL_MEM_OBJECT_IMAGE2D,
-            sourceWidth,
-            sourceHeight,
-            0, 0, // depth (unused), array size (unused)
-            sourceRowPitch,
-            0, // slice pitch (unused)
-            sourceNumMIPLevels,
-            sourceNumSamples,
-            // Use buffer as input to image
-            sourceImage()
-        };
-        object_ = ::clCreateImage(
-            context(),
-            0, // flags should be inherited from mem_object
-            &sourceFormat,
-            &desc,
-            nullptr,
-            &error);
-
-        detail::errHandler(error, __CREATE_IMAGE_ERR);
-        if (err != nullptr) {
-            *err = error;
-        }
-    }
+   
 #endif //#if CL_HPP_TARGET_OPENCL_VERSION >= 200
 
     //! \brief Default constructor - initializes to NULL.
